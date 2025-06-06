@@ -1,0 +1,47 @@
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="Eclinic.AdminDashboard">
+    <children>
+        <VBox spacing="15.0" alignment="CENTER" AnchorPane.topAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="Eclinic - Appointment Form">
+                <font>
+                    <Font name="Arial Bold" size="20"/>
+                </font>
+            </Label>
+
+            <HBox spacing="10">
+                <Label text="Disease:"/>
+                <ComboBox fx:id="diseaseComboBox" prefWidth="200.0"/>
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Appointment Date:"/>
+                <DatePicker fx:id="appointmentDatePicker"/>
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Time:"/>
+                <ComboBox fx:id="timeComboBox" prefWidth="150.0"/>
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Doctor:"/>
+                <Label fx:id="assignedDoctorLabel" text="Assigned Doctor: None"/>
+            </HBox>
+
+            <Button fx:id="confirmButton" text="Confirm Appointment" disable="true" prefWidth="200.0"/>
+        </VBox>
+    </children>
+</AnchorPane>
