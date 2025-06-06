@@ -14,12 +14,19 @@ import javafx.stage.Stage;
 
 import java.sql.*;
 import java.time.LocalDate;
+import static javafx.application.Application.launch;
+import javafx.scene.Node;
 
 public class DoctorDashboard extends Application {
+    private String name;
+    private String email;
+    private String condition;
 
     private BorderPane rootLayout;
     private VBox currentContent;
-   
+    private String currentDoctorName = "Dr. John Doe"; // Replace with real logic
+    private VBox sidebar; // Declare sidebar
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -112,6 +119,85 @@ public class DoctorDashboard extends Application {
         return button;
     }
 
+    
+    private void showMyPatients() {
+    currentContent.getChildren().clear();
+
+    VBox patientsView = new VBox(20);
+    patientsView.setPadding(new Insets(20));
+
+    Label title = new Label("My Patients");
+    title.setFont(Font.font("Segoe UI", 24));
+    title.setTextFill(Color.web("#232946"));
+
+    TableView<Patient> patientsTable = new TableView<>();
+    patientsTable.setItems(fetchPatientsFromDatabase());
+
+    TableColumn<Patient, String> nameCol = new TableColumn<>("Name");
+    nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+    TableColumn<Patient, String> emailCol = new TableColumn<>("Email");
+    emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
+
+    TableColumn<Patient, String> conditionCol = new TableColumn<>("Condition");
+    conditionCol.setCellValueFactory(new PropertyValueFactory<>("condition"));
+
+    patientsTable.getColumns().addAll(nameCol, emailCol, conditionCol);
+
+    patientsView.getChildren().addAll(title, patientsTable);
+    currentContent.getChildren().add(patientsView);
+}
+
+    
+    private ObservableList<Patient> fetchPatientsFromDatabase() {
+    ObservableList<Patient> patientsList = FXCollections.observableArrayList();
+
+    int doctorId = getDoctorId(currentDoctorName);
+    if (doctorId == -1) return patientsList;
+
+    String query = "SELECT name, email, condition FROM patients WHERE doctor_id = ?";
+    try (Connection conn = connect();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        stmt.setInt(1, doctorId);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+            String name = rs.getString("name");
+            String email = rs.getString("email");
+            String condition = rs.getString("condition");
+
+            patientsList.add(new Patient(name, email, condition));
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return patientsList;
+}
+
+    private int getDoctorId(String doctorName) {
+    int doctorId = -1;
+    String query = "SELECT doctor_id FROM doctor_records WHERE full_name = ?";
+
+    try (Connection conn = connect();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        stmt.setString(1, doctorName);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            doctorId = rs.getInt("doctor_id");
+        }
+
+    } catch (SQLException e) {
+    }
+
+    return doctorId;
+}
+
+    
     private void setSidebarActive(String text) {
         for (Node node : sidebar.getChildren()) {
             if (node instanceof Button) {
@@ -124,6 +210,111 @@ public class DoctorDashboard extends Application {
         }
     }
 
+    private void showDoctorProfile() {
+    // TODO: implement profile display logic
+    System.out.println("Doctor profile feature is not implemented yet.");
+}
+
+    
+    // Prescription.java
+public class Prescription {
+    private String patientName;
+    private String medication;
+    private String dosage;
+
+    public Prescription(String patientName, String medication, String dosage) {
+        this.patientName = patientName;
+        this.medication = medication;
+        this.dosage = dosage;
+    }
+
+    // Getters
+    public String getPatientName() { return patientName; }
+    public String getMedication() { return medication; }
+    public String getDosage() { return dosage; }
+}
+
+    
+  // Patients.java
+
+public class Patient {
+    private String name;
+    private String gender;
+    private String contact;
+
+    public Patient(String name, String gender, String contact) {
+        this.name = name;
+        this.gender = gender;
+        this.contact = contact;
+    }
+
+    // Getters
+    public String getName() {
+        return name;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+}
+
+    
+   // Appointment.java
+public class Appointment {
+    private String patientName;
+    private String date;
+    private String time;
+    private String status;
+    private String doctorName;
+
+    public Appointment(String patientName, String date, String time, String status, String doctorName) {
+        this.patientName = patientName;
+        this.date = date;
+        this.time = time;
+        this.status = status;
+        this.doctorName = doctorName;
+    }
+
+    // Overloaded constructor for 4 parameters
+    public Appointment(String patientName, String date, String time, String status) {
+        this(patientName, date, time, status, ""); // Default doctor name
+    }
+
+    // Getters
+    public String getPatientName() { return patientName; }
+    public String getDate() { return date; }
+    public String getTime() { return time; }
+    public String getStatus() { return status; }
+    public String getDoctorName() { return doctorName; }
+}
+
+
+    
+    
+ private Connection connect() {
+    String url = "jdbc:mysql://localhost:3306/eclinic"; // Adjust as necessary
+    String user = "root"; // Your DB username
+    String password = ""; // Your DB password
+
+    try {
+        return DriverManager.getConnection(url, user, password);
+    } catch (SQLException e) {
+        return null;
+    }
+}
+
+
+private void handleEmergency() {
+    // Logic for handling emergency situations
+    System.out.println("Emergency button clicked!");
+}
+
+    
+    
     // --- Dashboard Overview ---
     private void showDashboardOverview() {
         currentContent.getChildren().clear();
@@ -193,6 +384,10 @@ public class DoctorDashboard extends Application {
         return btn;
     }
 
+    
+    
+    
+    
     // --- My Appointments ---
     private void showMyAppointments() {
         currentContent.getChildren().clear();
@@ -242,53 +437,41 @@ public class DoctorDashboard extends Application {
         return list;
     }
 
-    // --- My Patients ---
-    private void showMyPatients() {
-        currentContent.getChildren().clear();
-        VBox patientsView = new VBox(20);
-        patientsView.setPadding(new Insets(20));
-
-        Label title = new Label("My Patients");
-        title.setFont(Font.font("Segoe UI", 24));
-        title.setTextFill(Color.web("#232946"));
-
-        TableView<Patient> patientsTable = createPatientsTable();
-
-        patientsView.getChildren().addAll(title, patientsTable);
-        currentContent.getChildren().add(patientsView);
-    }
+    
 
     private TableView<Patient> createPatientsTable() {
-        TableView<Patient> table = new TableView<>();
-        table.setItems(getMyPatients());
+    TableView<Patient> table = new TableView<>();
+    table.setItems(getMyPatients());
 
-        TableColumn<Patient, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        TableColumn<Patient, String> genderCol = new TableColumn<>("Gender");
-        genderCol.setCellValueFactory(new PropertyValueFactory<>("gender"));
-        TableColumn<Patient, String> contactCol = new TableColumn<>("Contact");
-        contactCol.setCellValueFactory(new PropertyValueFactory<>("contact"));
+    TableColumn<Patient, String> nameCol = new TableColumn<>("Name");
+    nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+    TableColumn<Patient, String> genderCol = new TableColumn<>("Gender");
+    genderCol.setCellValueFactory(new PropertyValueFactory<>("gender"));
+    TableColumn<Patient, String> contactCol = new TableColumn<>("Contact");
+    contactCol.setCellValueFactory(new PropertyValueFactory<>("contact"));
 
-        table.getColumns().addAll(nameCol, genderCol, contactCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        return table;
-    }
+    table.getColumns().addAll(nameCol, genderCol, contactCol);
+    table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    return table;
+}
+
 
     private ObservableList<Patient> getMyPatients() {
-        ObservableList<Patient> list = FXCollections.observableArrayList();
-        String sql = "SELECT name, gender, contact FROM patients WHERE doctor_name=?";
-        try (Connection conn = connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, currentDoctorName);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                list.add(new Patients(rs.getString(1), rs.getString(2), rs.getString(3)));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    ObservableList<Patient> list = FXCollections.observableArrayList();
+    String sql = "SELECT name, gender, contact FROM patients WHERE doctor_name=?";
+    try (Connection conn = connect();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, currentDoctorName);
+        ResultSet rs = stmt.executeQuery();
+        while (rs.next()) {
+            // Ensure the constructor matches the parameters
+            list.add(new Patient(rs.getString("name"), rs.getString("gender"), rs.getString("contact")));
         }
-        return list;
+    } catch (SQLException e) {
     }
+    return list;
+}
+
 
     // --- Consultation Form ---
     private void showConsultationForm() {
@@ -436,5 +619,7 @@ public class DoctorDashboard extends Application {
         currentContent.getChildren().add(reportsView);
     }
 
-    // --- Profile ---
-    private void showDoctorProfile()
+      public static void main(String[] args) {
+        launch(args);
+    }
+}
